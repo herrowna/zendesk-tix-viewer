@@ -1,67 +1,30 @@
 var chalk       = require('chalk');
-var clear       = require('clear');
 var inquirer    = require('inquirer');
+var questions   = require ('./prompt_schema.js');
+var styling     = require ('./cli.js');
 
-function getZendeskCredentials(callback) {
-  var questions = [
-    {
-      name: 'subdomain',
-      type: 'input',
-      message: 'Subdomain:',
-      validate: function( value ) {
-        if (value.length) {
-          return true;
-        } else {
-          return 'Please enter your subdomain';
-        }
-      }
-    },{
-      name: 'username',
-      type: 'input',
-      message: 'Username:',
-      validate: function( value ) {
-        if (value.length) {
-          return true;
-        } else {
-          return 'Please enter your username or e-mail address';
-        }
-      }
-    },
-    {
-      name: 'password',
-      type: 'password',
-      message: 'Password:',
-      validate: function(value) {
-        if (value.length) {
-          return true;
-        } else {
-          return 'Please enter your password';
-        }
-      }
-    }
-  ];
-
-  inquirer.prompt(questions).then(callback);
+function getZendeskCredentials() {
+    inquirer.prompt(questions.credentials).then(function(answers){
+        credentials = answers;
+        var subdomain = answers['subdomain']
+        client = initClient(credentials);
+        menu(client, subdomain);    
+        });
 }
 
-function menu(client, url){
-    var questions = [
-        {
-        type: 'list',
-        name: 'menu',
-        message: 'Menu:\n',
-        choices: [ 'View all tickets', 'View a ticket', 'Exit' ],
-        default: 'View all tickets'
-        }
-    ]
-    inquirer.prompt(questions).then(function(answers){
+function menu(client, subdomain){
+    inquirer.prompt(questions.menu).then(function(answers){
         var choice = answers['menu'];
         switch(choice){
             case 'View all tickets':
-                getAllTickets(client, url);
+                url = 'https://'+subdomain+'.zendesk.com/api/v2/tickets.json?&per_page=25';
+                getAllTickets(client, url, subdomain);
                 break;
             case 'View a ticket':
-                console.log('More!');
+                viewTicketMenu(function(answers){
+                    var id = answers['ticket_number'];
+                    getIndividualTicket(client, subdomain, id);
+                });
                 break;
             case 'Exit':
                 console.log(chalk.cyan.bold.inverse('Goodbye!'));
@@ -71,27 +34,11 @@ function menu(client, url){
 }
 
 function viewTicketMenu(callback){
-    var questions = [
-        {
-        type: 'list',
-        name: 'view_ticket',
-        message: 'Menu:\n',
-        choices: ['Enter ticket number', 'Back'],
-        default: 'Enter ticket number'
-        }
-    ]
-    inquirer.prompt(questions).then(callback);
+    inquirer.prompt(questions.ticket_number).then(callback);
 }
 
 function viewMoreTicketsMenu(callback){
-    var questions = [
-        {
-        type: 'confirm',
-        name: 'view_more',
-        message: 'More tickets available! View more?',
-        }
-    ]
-    inquirer.prompt(questions).then(callback);
+    inquirer.prompt(questions.view_more).then(callback);
 }
 
 function initClient(credentials){
@@ -103,25 +50,30 @@ function initClient(credentials){
     return rest_client;
 }
 
-function getAllTickets(client, url){
+function getIndividualTicket(client, subdomain, id){
+    var url = 'https://'+subdomain+'.zendesk.com/api/v2/tickets/'+id+'.json';
+    client.get(url, function(data, response){
+        styling.format_individual_tickets_view(data);
+    })
+    menu(client, subdomain)
+}
+
+function getAllTickets(client, url, subdomain){
     client.get(url, function(data, response){
         try {
             if('error' in data) {
                 var error = JSON.stringify(data['error'])
                 throw new SyntaxError(error);
             } else {
-                var tickets = data['tickets'];
-                for (var i in tickets){
-                    console.log(tickets[i].id+ ': ' + tickets[i].subject)
-                }
+                styling.format_all_tickets_view(data);
                 if (data['next_page'] != null){
                     viewMoreTicketsMenu(function(answers){
                         switch(answers['view_more']){
                             case true:
-                                getAllTickets(client, data['next_page'])
+                                getAllTickets(client, data['next_page'], subdomain)
                                 break;
                             case false:
-                                menu(client, url);
+                                menu(client, subdomain);
                                 break;
                         }
                         })
@@ -129,15 +81,10 @@ function getAllTickets(client, url){
                 }
         } catch(e) {
             console.log(JSON.stringify(e.message));
-            process.exit()
+            getZendeskCredentials();
         }
     })
 }
 
 console.log(chalk.cyan.bold.inverse('Welcome to Zendesk Tix Viewer!'));
-getZendeskCredentials(function(){
-    var credentials = arguments['0'];
-    var url = 'https://'+credentials['subdomain']+'.zendesk.com/api/v2/tickets.json?&per_page=25';
-    client = initClient(credentials);
-    menu(client, url);
-})
+getZendeskCredentials();
