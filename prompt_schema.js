@@ -61,3 +61,8 @@ exports.view_more = [{
     name: 'view_more',
     message: 'More tickets available! View more?',
 }];
+
+if (require.main === module){   
+    console.log('Please run `node main.js`!')
+}  else {
+}

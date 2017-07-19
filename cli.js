@@ -10,9 +10,14 @@ exports.format_all_tickets_view = function(data){
 
 exports.format_individual_tickets_view = function(data){
     var ticket = data ['ticket'];
-    console.log(chalk.italic('Ticket #' + ticket['id'] + ' created on ' + ticket['created_at'] + 
+    console.log(chalk.italic('\n' + 'Ticket #' + ticket['id'] + ' created on ' + ticket['created_at'] + 
     ' by ' + ticket['submitter_id'] + '\n'));
     console.log(chalk.bold.underline(ticket['subject']) + '\n')
     console.log(ticket['description'] + '\n')
     console.log('Tags: ' + ticket['tags'] + '\n')
+}
+
+if (require.main === module){   
+    console.log('Please run `node main.js`!')
+}  else {
 }
