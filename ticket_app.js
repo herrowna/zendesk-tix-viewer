@@ -26,7 +26,6 @@ exports.checkMoreTickets = function(client, data, subdomain){
             switch(answers['view_more']){
                 case true:
                     exports.getTickets(client, data['next_page'], function(data){
-                        console.log(data);
                         exports.parseTickets(data);
                         exports.checkMoreTickets(client, data, subdomain)
                     });
@@ -45,8 +44,8 @@ exports.checkMoreTickets = function(client, data, subdomain){
 exports.parseTickets = function(data){
     try {
         if('error' in data) {
-            var error = JSON.stringify(data['error'])
-            throw new SyntaxError(error);
+            var err = JSON.stringify(data['error'])
+            throw new Error(err);
         } else {
             styling.format_all_tickets_view(data);  
             }
@@ -56,30 +55,35 @@ exports.parseTickets = function(data){
     }
 }
 
+
 exports.getIndividualTicket = function(client, subdomain, id){
     var url = 'https://'+subdomain+'.zendesk.com/api/v2/tickets/'+id+'.json';
-    client.get(url, function(data, response){
-        try {
-            if('error' in data) {
-                var error = JSON.stringify(data['error'])
-                throw new Error(error);
-            } else {
-                styling.format_individual_tickets_view(data);
-                prompt.menu(client, subdomain)
-                }
-        } catch(e) {
-            console.log('Error: ' + JSON.stringify(e['message']));
-            switch(e['message']) {
-                case "\"RecordNotFound\"":
-                    prompt.menu(client, subdomain);
-                    break;
-                case "\"Couldn't authenticate you\"":
-                    prompt.getZendeskCredentials();
-                    break;
-            }
-        }
+    exports.getTickets(client, url, function(data){
+        exports.parseIndividualTicket(client, data, subdomain)
     })
 };
+
+exports.parseIndividualTicket = function(client, data, subdomain){
+    try {
+        if('error' in data) {
+            var error = JSON.stringify(data['error'])
+            throw new Error(error);
+        } else {
+            styling.format_individual_tickets_view(data);
+            prompt.menu(client, subdomain)
+            }
+    } catch(e) {
+        console.log('Error: ' + JSON.stringify(e['message']));
+        switch(e['message']) {
+            case "\"RecordNotFound\"":
+                prompt.menu(client, subdomain);
+                break;
+            case "\"Couldn't authenticate you\"":
+                prompt.getZendeskCredentials();
+                break;
+        }
+    }
+}
 
 if (require.main === module){   
     console.log('Please run `node main.js`!')

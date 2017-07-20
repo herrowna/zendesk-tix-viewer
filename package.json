@@ -4,7 +4,8 @@
   "description": "A ticket viewer",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha 'test/*.js' --timeout 10000",
+    "test-debug": "mocha --debug 'test/*.js' --timeout 10000"
   },
   "repository": {
     "type": "git",
@@ -18,14 +19,11 @@
   "homepage": "https://github.com/herrowna/zendesk-tix-viewer#readme",
   "devDependencies": {
     "chai": "^4.1.0",
-    "mocha": "^3.4.2",
-    "nodemon": "^1.11.0",
-    "type-detect": "^4.0.3"
+    "mocha": "^3.4.2"
   },
   "dependencies": {
     "chalk": "^2.0.1",
     "inquirer": "^3.2.0",
-    "node-rest-client": "^3.1.0",
-    "prompt": "^1.0.0"
+    "node-rest-client": "^3.1.0"
   }
 }
