@@ -1,7 +1,20 @@
+/*
+    prompt.js
+
+    Prompt for zendesk-tix-viewer, uses `inquirer.js` 
+    to draw the prompt for navigating around the program.
+*/
 var inquirer    = require('inquirer');
 var questions   = require ('./prompt_schema');
 var app         = require('./ticket_app');
 var chalk       = require('chalk');
+
+
+/* 
+    getZendeskCredentials function.
+    Prompts user for subdomain, username & password.
+    Calls main menu when credentials are entered.
+*/
 
 exports.getZendeskCredentials = function(){
     inquirer.prompt(questions.credentials).then(function(answers){
@@ -11,6 +24,11 @@ exports.getZendeskCredentials = function(){
         exports.menu(client, subdomain);    
     });
 }
+
+/* 
+    menu function.
+    Main menu.
+*/
 
 exports.menu = function(client, subdomain){
     inquirer.prompt(questions.menu).then(function(answers){
@@ -24,10 +42,7 @@ exports.menu = function(client, subdomain){
             });
             break;
         case 'View a ticket':
-            exports.viewTicketMenu(function(answers){
-                var id = answers['ticket_number'];
-                app.getIndividualTicket(client, subdomain, id);
-            });
+            exports.viewTicketMenu(client, subdomain);
             break;
         case 'Exit':
             console.log(chalk.cyan.bold.inverse('Goodbye!'));
@@ -37,12 +52,39 @@ exports.menu = function(client, subdomain){
 })
 }
 
-exports.viewTicketMenu = function(callback){
-    inquirer.prompt(questions.ticket_number).then(callback);
+/* 
+    viewTicketMenu function.
+    Prompts user for ticket ID.
+    Calls getIndividualTicket function to get the ticket.
+*/
+
+exports.viewTicketMenu = function(client, subdomain){
+    inquirer.prompt(questions.ticket_number).then(function(answers){
+        var id = answers['ticket_number'];
+        app.getIndividualTicket(client, subdomain, id);
+    });
 }
 
-exports.viewMoreTicketsMenu = function(callback){
-    inquirer.prompt(questions.view_more).then(callback);
+/* 
+    viewMoreTicketsMenu function.
+    Is called when there are more tickets in the query,
+    prompts user to view more or return to main menu.
+*/
+
+exports.viewMoreTicketsMenu = function(client, data, subdomain){
+    inquirer.prompt(questions.view_more).then(function(answers){
+        switch(answers['view_more']){
+            case true:
+                app.getTickets(client, data['next_page'], function(data){
+                    app.parseTickets(data);
+                    app.checkMoreTickets(client, data, subdomain)
+                });
+                break;
+            case false:
+                exports.menu(client, subdomain);
+                break;
+        }
+    });
 }
 
 if (require.main === module){   

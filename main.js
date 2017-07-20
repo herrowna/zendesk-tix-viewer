@@ -1,3 +1,10 @@
+/*
+    main.js
+    Run me!
+    `npm install`
+    `node main.js`
+*/
+
 var chalk  = require('chalk');
 var prompt = require('./prompt');
 

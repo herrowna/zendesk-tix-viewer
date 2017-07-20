@@ -1,3 +1,8 @@
+/*
+    prompt_schema.js
+    Questions for prompt.
+*/
+
 exports.credentials = [{
     name: 'subdomain',
     type: 'input',
