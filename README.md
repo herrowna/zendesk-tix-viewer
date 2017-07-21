@@ -9,10 +9,9 @@
 
 ## Usage
 
-> `node main.js`
+1. > `node main.js`
 
-1. Login instructions are as below:
-### Credentials
+2. Login instructions are as below:
 
 >`subdomain: acmecorp,`
 >
@@ -20,7 +19,7 @@
 >
 > `password: zendesk`
 
-2. Navigate the main menu via up and down keys.
+3. Navigate the main menu via up and down keys.
 
 ## Run tests
 > `npm test`
